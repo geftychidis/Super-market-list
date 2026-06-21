@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Λίστα Αγορών</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --ink:#1b2733; --muted:#6b7886;
+  --accent:#2e7d32; --accent-d:#1b5e20; --blue:#1f4e79; --brand:#7030a0;
+  --line:#e7ebef; --chip:#eef2f6; --danger:#c0392b;
+  --pad: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:16px;line-height:1.35;padding-bottom:calc(96px + var(--pad))}
+.wrap{max-width:680px;margin:0 auto}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--accent),var(--accent-d));
+  color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px}
+header h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}
+header .sub{font-size:12px;opacity:.85;margin-top:2px}
+.tabs{display:flex;gap:8px;margin-top:10px}
+.tab{flex:1;border:0;border-radius:12px;padding:10px;font-size:14px;font-weight:600;
+  background:rgba(255,255,255,.18);color:#fff;cursor:pointer}
+.tab.active{background:#fff;color:var(--accent-d)}
+.badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:11px;
+  background:#fff;color:var(--accent-d);font-size:12px;font-weight:700;line-height:20px;text-align:center}
+.tab.active .badge{background:var(--accent);color:#fff}
+main{padding:12px}
+.search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:var(--card)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;border:1px solid var(--line);background:var(--chip);color:var(--ink);
+  padding:8px 14px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer}
+.chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.catlist{margin-top:12px}
+.catrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;
+  padding:17px 14px;border-top:1px solid var(--line);font-size:17px;font-weight:600;color:var(--ink);cursor:pointer}
+.catrow:first-child{border-top:0}
+.catrow:active{background:#f1f6f2}
+.cname{flex:1}
+.badge2{background:var(--accent);color:#fff;border-radius:12px;min-width:24px;padding:0 8px;line-height:24px;
+  font-size:13px;font-weight:700;text-align:center}
+.chev{color:var(--muted);font-size:24px;font-weight:400;line-height:1}
+.back{display:inline-flex;align-items:center;border:0;background:transparent;color:var(--blue);
+  font-size:16px;font-weight:700;padding:8px 2px 6px;cursor:pointer}
+.detTitle{font-size:21px;font-weight:800;color:var(--accent-d);margin:2px 4px 12px}
+.doneCat{margin-top:16px;width:100%}
+.addrow{display:flex;gap:8px;align-items:center}
+.cin{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:16px;font-family:inherit}
+.addBtn{flex:0 0 auto;padding:12px 16px;border-radius:10px}
+.row.cust .nm{font-weight:600}
+.catTitle{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.4px;margin:16px 4px 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row.opt{padding-left:30px;background:#fcfbfe}
+.row .main{flex:1;min-width:0}
+.row .nm{font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.row.opt .nm{font-size:15px;color:#3a2a52}
+.pill{font-size:10px;font-weight:700;color:var(--brand);background:#f0e8f7;border-radius:6px;padding:1px 6px}
+.pill.cat{color:var(--blue);background:#e7eff7}
+.cb{width:26px;height:26px;flex:0 0 26px;accent-color:var(--accent);transform:scale(1.15)}
+.qty{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.qty button{width:38px;height:38px;border:0;background:#f3f5f7;font-size:20px;font-weight:700;color:var(--accent-d);cursor:pointer}
+.qty .n{width:40px;text-align:center;font-size:16px;font-weight:700}
+.qty.hidden{visibility:hidden}
+.empty{color:var(--muted);text-align:center;padding:40px 16px}
+.listGroup .catTitle{margin-top:18px}
+.li{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li.excluded .nm{text-decoration:line-through;color:var(--muted)}
+.li .x{width:34px;height:34px;border:0;background:#fbeceb;color:var(--danger);border-radius:9px;font-size:18px;font-weight:700;cursor:pointer}
+.bottombar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.96);
+  border-top:1px solid var(--line);padding:10px 14px calc(10px + var(--pad));backdrop-filter:blur(8px)}
+.bottombar .inner{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.btn{flex:1;border:0;border-radius:13px;padding:15px;font-size:16px;font-weight:700;cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.ghost{background:var(--chip);color:var(--ink);flex:0 0 auto;padding:15px 16px}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+.btn.note{background:#ffcc00;color:#3a2e00}
+.inner.two{display:flex;gap:10px}
+.inner.two .btn{flex:1}
+.link{border:0;background:transparent;color:var(--blue);font-weight:700;font-size:13px;padding:4px 6px;cursor:pointer}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:680px;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + var(--pad))}
+.sheetT{font-weight:800;font-size:17px;margin-bottom:10px}
+.sheet textarea{width:100%;height:38vh;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;resize:none}
+.sheetB{display:flex;gap:10px;margin:12px 0 4px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🛒 Λίστα Αγορών</h1>
+    <div class="sub">Διάλεξε κατηγορία, τσέκαρε είδη &amp; ποσότητες, εξάγαγε σε Excel</div>
+    <div class="tabs">
+      <button class="tab active" id="tabBrowse">Προϊόντα</button>
+      <button class="tab" id="tabList">Η λίστα μου <span class="badge" id="cnt">0</span></button>
+    </div>
+  </header>
+  <main>
+    <section id="browse">
+      <input class="search" id="search" type="search" placeholder="🔎 Αναζήτηση προϊόντος ή μάρκας…" autocomplete="off">
+      <div id="products"></div>
+    </section>
+    <section id="list" class="hidden"></section>
+  </main>
+</div>
+<div class="bottombar" id="bar"></div>
+<script>
+var DATA = {"categories": [{"name": "Αρτοποιείο & Δημητριακά", "groups": [{"main": "Ψωμί τοστ ολικής", "options": ["Παπαδοπούλου", "Καραμολέγκος", "7 Days"]}, {"main": "Φρυγανιές ολικής Elite", "options": []}, {"main": "Μακαρόνια MISKO No6", "options": []}, {"main": "Ρύζι Carolina Bio", "options": ["Αγρινό", "3ΑΛΦΑ", "Μέλισσα"]}, {"main": "Βρώμη Quaker", "options": []}]}, {"name": "Γαλακτοκομικά & Τυριά", "groups": [{"main": "Γιαούρτι Ολύμπος Βιολογικό", "options": []}, {"main": "Γιαούρτι Πρωτεΐνης", "options": ["ΦΑΓΕ", "ΚΡΙ ΚΡΙ", "ΜΕΒΓΑΛ", "Όλυμπος"]}, {"main": "Γάλα ΔΕΛΤΑ υψηλής παστερίωσης", "options": []}, {"main": "Τυρί τοστ χαμηλών λιπαρών", "options": ["ΝΟΥΝΟΥ", "Arla", "Milner", "ΤΥΡΑΣ"]}, {"main": "Dirollo", "options": []}, {"main": "Φέτα Τριπόλεως", "options": []}, {"main": "Γραβιέρα Νάξου", "options": []}, {"main": "Arla Chocolate", "options": []}, {"main": "Κεφίρ", "options": ["ΚΡΙ ΚΡΙ", "ΔΩΔΩΝΗ", "Όλυμπος"]}, {"main": "Ανθότυρο", "options": ["ΔΩΔΩΝΗ", "ΗΠΕΙΡΟΣ", "Όλυμπος"]}]}, {"name": "Αλλαντικά & Κρέας", "groups": [{"main": "Γαλοπούλα βραστή φέτες", "options": ["Υφαντής", "Νίκας", "Creta Farms"]}, {"main": "Κατσίκι Δομοκού", "options": []}, {"main": "Κοτόπουλο νωπό", "options": ["Πίνδος", "Νιτσιάκος", "Αγγελάκης"]}]}, {"name": "Κατεψυγμένα", "groups": [{"main": "Φασολάκια Μπάρμπα Στάθης", "options": []}, {"main": "Μπάμιες Μπάρμπα Στάθης", "options": []}, {"main": "Αρακάς Μπάρμπα Στάθης", "options": []}]}, {"name": "Παντοπωλείο", "groups": [{"main": "Pumaro Bio", "options": []}, {"main": "Ελαιόλαδο έξτρα παρθένο", "options": ["Άλτις", "Μινέρβα", "Χωριό"]}, {"main": "Ζάχαρη", "options": ["Ελληνική Ζάχαρη (ΕΒΖ)", "Γιώτης", "ιδιωτική ετικέτα"]}, {"main": "Αλάτι", "options": ["Κάλας", "Αλάτι Μεσολογγίου", "ιδιωτική ετικέτα"]}, {"main": "Καφές Λουμίδη", "options": []}, {"main": "Atlantis Caramels", "options": []}]}, {"name": "Νερά & Αναψυκτικά", "groups": [{"main": "Mastiqua νερό", "options": []}, {"main": "Perrier 200ml", "options": []}, {"main": "Εμφιαλωμένο νερό 1.5L", "options": ["Ζαγόρι", "Αύρα", "Βίκος"]}]}, {"name": "Χαρτικά", "groups": [{"main": "Χαρτί υγείας χωρίς ετικέτα", "options": ["Softex", "Endless", "Zewa"]}, {"main": "Ρολό κουζίνας χωρίς ετικέτα", "options": ["Softex", "Endless", "Zewa"]}, {"main": "Χαρτοπετσέτες χωρίς ετικέτα", "options": ["Softex", "Endless"]}, {"main": "Χαρτομάντηλα", "options": ["Softex", "Zewa", "Tempo"]}, {"main": "Μωρομάντηλα", "options": ["Babylino", "Pampers", "Huggies"]}]}, {"name": "Καθαριστικά & Φροντίδα Σπιτιού", "groups": [{"main": "Azax Spray Χλωρίνη", "options": []}, {"main": "Ταμπλέτες πλυντηρίου πιάτων (>30)", "options": ["Finish", "Fairy", "Somat"]}, {"main": "Μαλακτικό πλυσίματος ρούχων", "options": ["Comfort", "Lenor", "Cajoline"]}, {"main": "Overlay για ξύλινο πάτωμα", "options": []}, {"main": "Glory για μάρμαρα", "options": []}, {"main": "Αντισκωρικό ντουλάπας λεβάντα", "options": ["FEGO", "BOSS", "Floral"]}, {"main": "Ταμπλέτες αντικουνουπικό", "options": ["Raid", "Aroxol", "Vape"]}, {"main": "Pronto για πάτωμα", "options": []}, {"main": "Σαπούνι υγρό για τα πιάτα", "options": ["Fairy", "Ava", "ιδιωτική ετικέτα"]}, {"main": "Skip υγρό πλυντηρίου ρούχων", "options": []}]}, {"name": "Περιποίηση/Υγιεινή", "groups": [{"main": "Σαπούνι χεριών υγρό Dettol", "options": []}, {"main": "Αφρός ξυρίσματος", "options": ["Gillette", "Nivea Men", "Williams"]}, {"main": "Αφρόλουτρο", "options": ["Nivea", "Palmolive", "Fa"]}, {"main": "Σαμπουάν καθημερινό", "options": ["Head & Shoulders", "Pantene", "Elvive"]}, {"main": "Κρέμα σώματος", "options": ["Nivea", "Neutrogena", "Garnier"]}]}, {"name": "Σαλάτες", "groups": [{"main": "Φρεσκούλης Ιταλική 200g", "options": []}, {"main": "Φρεσκούλης Καπριτσιόζα 160g", "options": []}, {"main": "Φρεσκούλης Ιταλική Οικογενειακή 425g", "options": []}, {"main": "Φρεσκούλης Bio Ιταλική 200g", "options": []}, {"main": "Φρεσκούλης Bio Καπριτσιόζα 150g", "options": []}]}, {"name": "Λαχανικά", "groups": [{"main": "Ντομάτες βιολογικές", "options": []}, {"main": "Αγγουρι βιολογικό", "options": []}, {"main": "Πατάτες βιολογικές", "options": []}, {"main": "Πατάτες Κύπρου", "options": []}, {"main": "Κρεμμύδια", "options": []}, {"main": "Κρεμμυδάκια", "options": []}, {"main": "Ανιθο", "options": []}, {"main": "Μαιντανό", "options": []}, {"main": "Σέλινο", "options": []}, {"main": "Καρότα βιολογικά", "options": []}, {"main": "Μπρόκολο βιολογικό", "options": []}, {"main": "Κουνουπίδι βιολογικό", "options": []}, {"main": "Μαρούλι βιολογικό", "options": []}, {"main": "Λάχανο βιολογικό", "options": []}]}, {"name": "Αντηλιακά", "groups": [{"main": "Προσώπου 50+", "options": ["Carroten", "Nivea Sun", "La Roche-Posay"]}, {"main": "Σωματος 30+", "options": ["Carroten", "Nivea Sun", "Ambre Solaire"]}, {"main": "Σ'ωματος 50+", "options": ["Carroten", "Nivea Sun", "Ambre Solaire"]}]}, {"name": "Αναψυκτικά", "groups": [{"main": "Coca cola", "options": []}, {"main": "Coca colla Zero χωρίς καφείνη", "options": []}, {"main": "Coca colla Zero", "options": []}, {"main": "Πορτοκαλάδα αεριούχος", "options": ["Fanta", "ΗΒΗ", "Epsa"]}, {"main": "Σόδα", "options": ["Σουρωτή", "Schweppes", "ΗΒΗ"]}]}, {"name": "Καφέδες", "groups": [{"main": "Ελληνικός καφές", "options": ["Λουμίδης", "Μπράβο", "Ουζούνογλου", "Δάνδαλη"]}, {"main": "Γαλλικός καφές", "options": ["Jacobs", "Bravo", "Λουμίδης Παπαγάλος"]}, {"main": "Dolce gusto", "options": []}, {"main": "Nespresso", "options": []}]}, {"name": "Μπύρες", "groups": [{"main": "Νησος", "options": []}, {"main": "Νύμφη", "options": []}, {"main": "Fischer", "options": []}, {"main": "Kaiser", "options": []}, {"main": "Αλφα", "options": []}, {"main": "Μυθος", "options": []}, {"main": "Fix", "options": []}, {"main": "Amstel", "options": []}]}]};
+
+var $ = function(s,el){return (el||document).querySelector(s)};
+var KEY='lista_agoron_v2';
+var state = loadState();
+function loadState(){ try{var r=JSON.parse(localStorage.getItem(KEY)); if(r&&r.sel) return r;}catch(e){} return {sel:{}, cat:0}; }
+function persist(){ try{localStorage.setItem(KEY, JSON.stringify(state));}catch(e){} }
+function uid(cat,name){ return cat+'␟'+name; }
+function selCount(){ var n=0; for(var k in state.sel){ n++; } return n; }
+function inclCount(){ var n=0; for(var k in state.sel){ if(state.sel[k].include!==false) n++; } return n; }
+
+// ---- ordered iteration over selected items (follows DATA order) ----
+function selectedInOrder(){
+  var out=[];
+  DATA.categories.forEach(function(c){
+    c.groups.forEach(function(g){
+      [g.main].concat(g.options).forEach(function(nm){
+        var id=uid(c.name,nm);
+        if(state.sel[id]) out.push({id:id,cat:c.name,name:nm,it:state.sel[id]});
+      });
+    });
+  });
+  for(var k in state.sel){ if(state.sel[k].custom){ out.push({id:k,cat:state.sel[k].cat,name:state.sel[k].name,it:state.sel[k]}); } }
+  return out;
+}
+
+// ---------------- BROWSE (κάθετη λίστα → drill-down) ----------------
+function catCount(name){ var n=0; for(var k in state.sel){ if(state.sel[k].cat===name) n++; } return n; }
+function openCat(i){ state.view='cat'; state.cat=i; persist(); renderBrowse(); window.scrollTo(0,0); }
+function backToCats(){ state.view='cats'; $('#search').value=''; persist(); renderBrowse(); window.scrollTo(0,0); }
+function renderBrowse(){
+  var q=($('#search').value||'').trim().toLowerCase();
+  if(q){ renderSearch(q); return; }
+  if(state.view==='cat'){ renderDetail(); } else { renderCats(); }
+}
+function customItems(){ var a=[]; for(var k in state.sel){ if(state.sel[k].custom) a.push({id:k,it:state.sel[k]}); } return a; }
+function addCustom(){
+  var inp=document.getElementById('customIn'); if(!inp) return;
+  var name=(inp.value||'').trim(); if(!name) return;
+  var id=uid('Δικά μου',name);
+  if(state.sel[id]){ state.sel[id].qty++; } else { state.sel[id]={cat:'Δικά μου',name:name,qty:1,include:true,custom:true}; }
+  inp.value=''; persist(); updateCount(); renderCats();
+  var f=document.getElementById('customIn'); if(f) f.focus();
+}
+function renderCats(){
+  var cust=customItems(); var crows='';
+  cust.forEach(function(o){
+    crows+='<div class="row cust" data-id="'+esc(o.id)+'"><div class="main"><div class="nm">'+esc(o.it.name)+'</div></div>'+
+      '<div class="qty"><button class="dec">−</button><span class="n">'+o.it.qty+'</span><button class="inc">+</button></div>'+
+      '<button class="x cx">✕</button></div>';
+  });
+  var html='<div class="catTitle">Δικά μου είδη</div><div class="card">'+
+    '<div class="row addrow"><input id="customIn" class="cin" placeholder="Γράψε ένα είδος…" autocomplete="off">'+
+    '<button class="btn primary addBtn" id="addCustom">＋ Προσθήκη</button></div>'+ crows +'</div>';
+  html+='<div class="catTitle">Κατηγορίες</div><div class="card catlist">';
+  DATA.categories.forEach(function(c,i){
+    var n=catCount(c.name);
+    html+='<button class="catrow" data-i="'+i+'"><span class="cname">'+esc(c.name)+'</span>'+
+      (n?'<span class="badge2">'+n+'</span>':'')+'<span class="chev">›</span></button>';
+  });
+  html+='</div>';
+  $('#products').innerHTML=html;
+}
+function renderDetail(){
+  var c=DATA.categories[state.cat]; var rows='';
+  c.groups.forEach(function(g){
+    rows+=rowHTML(c.name,g.main,false);
+    g.options.forEach(function(o){ rows+=rowHTML(c.name,o,true); });
+  });
+  $('#products').innerHTML='<button class="back" data-back="1">‹ Κατηγορίες</button>'+
+    '<div class="detTitle">'+esc(c.name)+'</div>'+
+    '<div class="card">'+rows+'</div>'+
+    '<button class="btn primary doneCat" data-back="1">✓ Ολοκλήρωση — πίσω στις κατηγορίες</button>';
+}
+function renderSearch(q){
+  var html='';
+  DATA.categories.forEach(function(c){
+    var rows='';
+    c.groups.forEach(function(g){
+      var hitMain=g.main.toLowerCase().indexOf(q)>=0;
+      var opts=g.options.filter(function(o){return o.toLowerCase().indexOf(q)>=0;});
+      if(hitMain||opts.length){
+        rows+=rowHTML(c.name,g.main,false);
+        (hitMain?g.options:opts).forEach(function(o){ rows+=rowHTML(c.name,o,true); });
+      }
+    });
+    if(rows){ html+='<div class="catTitle">'+esc(c.name)+'</div><div class="card">'+rows+'</div>'; }
+  });
+  $('#products').innerHTML = html || '<div class="empty">Κανένα αποτέλεσμα.</div>';
+}
+function rowHTML(cat,name,isOpt){
+  var id=uid(cat,name); var it=state.sel[id]; var on=!!it; var q=on?it.qty:1;
+  var pill = isOpt ? '<span class="pill">μάρκα</span>' : '';
+  return '<div class="row'+(isOpt?' opt':'')+'" data-id="'+esc(id)+'">'+
+    '<input class="cb" type="checkbox" '+(on?'checked':'')+'>'+
+    '<div class="main"><div class="nm">'+esc(name)+' '+pill+'</div></div>'+
+    '<div class="qty'+(on?'':' hidden')+'">'+
+      '<button class="dec">−</button><span class="n">'+q+'</span><button class="inc">+</button>'+
+    '</div></div>';
+}
+// delegated events: category rows, back buttons, and product rows
+$('#products').addEventListener('click', function(e){
+  if(e.target.id==='addCustom'){ addCustom(); return; }
+  var cx=e.target.closest('.cx'); if(cx){ var cr2=cx.closest('.row'); var cid=cr2.getAttribute('data-id');
+    delete state.sel[cid]; persist(); updateCount(); renderCats(); return; }
+  var cu=e.target.closest('.row.cust');
+  if(cu){ var uidv=cu.getAttribute('data-id');
+    if(e.target.classList.contains('inc')) state.sel[uidv].qty++;
+    else if(e.target.classList.contains('dec')) state.sel[uidv].qty=Math.max(1,state.sel[uidv].qty-1);
+    else return;
+    cu.querySelector('.n').textContent=state.sel[uidv].qty; persist(); return; }
+  var cr=e.target.closest('.catrow'); if(cr){ openCat(+cr.getAttribute('data-i')); return; }
+  if(e.target.closest('[data-back]')){ backToCats(); return; }
+  var row=e.target.closest('.row'); if(!row) return; var id=row.getAttribute('data-id');
+  if(e.target.classList.contains('cb')){ toggle(id, e.target.checked); refreshRow(row,id); }
+  else if(e.target.classList.contains('inc')){ ensure(id); state.sel[id].qty++; afterQty(row,id); }
+  else if(e.target.classList.contains('dec')){ ensure(id); state.sel[id].qty=Math.max(1,state.sel[id].qty-1); afterQty(row,id); }
+});
+$('#products').addEventListener('keydown', function(e){
+  if(e.target && e.target.id==='customIn' && e.key==='Enter'){ e.preventDefault(); addCustom(); }
+});
+function toggle(id,on){ if(on){ ensure(id); } else { delete state.sel[id]; } persist(); updateCount(); }
+function ensure(id){ if(!state.sel[id]){ var p=id.split('␟'); state.sel[id]={cat:p[0],name:p[1],qty:1,include:true}; persist(); updateCount(); } }
+function afterQty(row,id){ row.querySelector('.n').textContent=state.sel[id].qty; row.querySelector('.cb').checked=true; row.querySelector('.qty').classList.remove('hidden'); persist(); updateCount(); }
+function refreshRow(row,id){ var on=!!state.sel[id]; row.querySelector('.qty').classList.toggle('hidden',!on); if(on) row.querySelector('.n').textContent=state.sel[id].qty; }
+
+// ---------------- MY LIST ----------------
+function renderList(){
+  var host=$('#list'); var items=selectedInOrder();
+  if(!items.length){ host.innerHTML='<div class="empty">Η λίστα σου είναι κενή.<br>Πήγαινε στα «Προϊόντα» και τσέκαρε ό,τι θες.</div>'; return; }
+  var byCat={}; var order=[];
+  items.forEach(function(o){ if(!byCat[o.cat]){byCat[o.cat]=[];order.push(o.cat);} byCat[o.cat].push(o); });
+  var html='<div class="listGroup">';
+  order.forEach(function(cat){
+    html+='<div class="catTitle">'+esc(cat)+'</div><div class="card">';
+    byCat[cat].forEach(function(o){
+      var ex=o.it.include===false;
+      html+='<div class="li'+(ex?' excluded':'')+'" data-id="'+esc(o.id)+'">'+
+        '<input class="cb incl" type="checkbox" '+(ex?'':'checked')+'>'+
+        '<div class="main"><div class="nm">'+esc(o.name)+'</div></div>'+
+        '<div class="qty"><button class="dec">−</button><span class="n">'+o.it.qty+'</span><button class="inc">+</button></div>'+
+        '<button class="x">✕</button></div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  host.innerHTML=html;
+}
+$('#list').addEventListener('click', function(e){
+  var li=e.target.closest('.li'); if(!li) return; var id=li.getAttribute('data-id'); var it=state.sel[id]; if(!it) return;
+  if(e.target.classList.contains('incl')){ it.include=e.target.checked; li.classList.toggle('excluded',!e.target.checked); persist(); updateCount(); }
+  else if(e.target.classList.contains('inc')){ it.qty++; li.querySelector('.n').textContent=it.qty; persist(); }
+  else if(e.target.classList.contains('dec')){ it.qty=Math.max(1,it.qty-1); li.querySelector('.n').textContent=it.qty; persist(); }
+  else if(e.target.classList.contains('x')){ delete state.sel[id]; persist(); updateCount(); renderList(); }
+});
+
+// ---------------- shared ----------------
+function updateCount(){ $('#cnt').textContent=selCount(); renderBar(); }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+var tab='browse';
+function setTab(t){
+  tab=t;
+  $('#tabBrowse').classList.toggle('active',t==='browse');
+  $('#tabList').classList.toggle('active',t==='list');
+  $('#browse').classList.toggle('hidden',t!=='browse');
+  $('#list').classList.toggle('hidden',t!=='list');
+  if(t==='list') renderList();
+  renderBar(); window.scrollTo(0,0);
+}
+$('#tabBrowse').onclick=function(){setTab('browse')};
+$('#tabList').onclick=function(){setTab('list')};
+$('#search').addEventListener('input', renderBrowse);
+
+function renderBar(){
+  var bar=$('#bar');
+  if(tab==='list'){
+    var n=inclCount();
+    bar.innerHTML='<div class="inner two">'+
+      '<button class="btn primary" id="exp">⬇︎ Excel ('+n+')</button>'+
+      '<button class="btn note" id="note">📝 Σημειώσεις ('+n+')</button></div>'+
+      '<div class="hint"><button class="link" id="clr">🗑 Καθαρισμός</button> · Ξετσέκαρε όσα δεν θες — εξάγονται μόνο τα τσεκαρισμένα</div>';
+    $('#exp').onclick=exportXlsx;
+    $('#note').onclick=saveToNotes;
+    $('#clr').onclick=function(){ if(confirm('Να καθαριστεί όλη η λίστα;')){ state.sel={}; persist(); updateCount(); renderList(); } };
+  } else {
+    bar.innerHTML='<div class="inner"><button class="btn primary" id="goList">Δες τη λίστα μου ('+selCount()+') →</button></div>';
+    $('#goList').onclick=function(){setTab('list')};
+  }
+}
+
+function exportRows(){
+  var rows=[['Κατηγορία','Προϊόν','Ποσότητα']];
+  selectedInOrder().forEach(function(o){ if(o.it.include!==false) rows.push([o.cat,o.name,o.it.qty]); });
+  return rows;
+}
+function fname(ext){ var d=new Date(); var p=function(n){return ('0'+n).slice(-2);};
+  return 'Lista_Agoron_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.'+ext; }
+function exportXlsx(){
+  var rows=exportRows();
+  if(rows.length===1){ alert('Δεν έχεις τσεκάρει κανένα προϊόν.'); return; }
+  if(window.XLSX){
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:28},{wch:40},{wch:10}];
+    var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Λίστα Αγορών');
+    XLSX.writeFile(wb, fname('xlsx'));
+  } else { exportCSV(rows); }
+}
+function exportCSV(rows){
+  var csv=rows.map(function(r){return r.map(function(c){var s=String(c);return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';');}).join('\n');
+  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname('csv'); a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},1500);
+  alert('Η βιβλιοθήκη Excel δεν φορτώθηκε (ίσως χωρίς internet) — έγινε εξαγωγή σε CSV, που ανοίγει κανονικά στο Excel.');
+}
+
+// ---- Apple Notes (μέσω iOS Share Sheet) ----
+function pad2(n){ return ('0'+n).slice(-2); }
+function dateStr(){ var d=new Date(); return pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+'/'+d.getFullYear(); }
+function listText(){
+  var items=selectedInOrder().filter(function(o){return o.it.include!==false;});
+  var out='🛒 Λίστα Αγορών — '+dateStr()+'\n'; var cur=null;
+  items.forEach(function(o){
+    if(o.cat!==cur){ cur=o.cat; out+='\n'+o.cat+'\n'; }
+    out+='• '+o.name+(o.it.qty>1?' ×'+o.it.qty:'')+'\n';
+  });
+  return out.trim();
+}
+function saveToNotes(){
+  if(!inclCount()){ alert('Δεν έχεις τσεκάρει κανένα προϊόν.'); return; }
+  var text=listText();
+  if(navigator.share){ navigator.share({title:'Λίστα Αγορών', text:text}).catch(function(){}); return; }
+  copyText(text);
+}
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(
+      function(){ alert('Η λίστα αντιγράφηκε — άνοιξε τα Σημειώσεις και κάνε επικόλληση.'); },
+      function(){ manualCopy(text); });
+  } else { manualCopy(text); }
+}
+function manualCopy(text){
+  var ov=document.createElement('div'); ov.className='overlay';
+  ov.innerHTML='<div class="sheet"><div class="sheetT">📝 Αποθήκευση στα Σημειώσεις</div>'+
+    '<textarea readonly id="ta"></textarea>'+
+    '<div class="sheetB"><button class="btn ghost" id="dl">Λήψη .txt</button>'+
+    '<button class="btn primary" id="cp">Αντιγραφή</button></div>'+
+    '<div style="text-align:center"><button class="link" id="cl">Κλείσιμο</button></div></div>';
+  document.body.appendChild(ov);
+  var ta=ov.querySelector('#ta'); ta.value=text; ta.focus(); ta.setSelectionRange(0,text.length);
+  ov.querySelector('#cp').onclick=function(){ ta.focus(); ta.setSelectionRange(0,text.length);
+    try{ document.execCommand('copy'); alert('Αντιγράφηκε — επικόλλησέ το στα Σημειώσεις.'); }
+    catch(e){ alert('Κράτησε πατημένο το κείμενο → Επιλογή όλων → Αντιγραφή.'); } };
+  ov.querySelector('#dl').onclick=function(){ var b=new Blob([text],{type:'text/plain;charset=utf-8'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=fname('txt'); a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},1500); };
+  ov.querySelector('#cl').onclick=function(){ document.body.removeChild(ov); };
+}
+
+state.view='cats'; renderBrowse(); updateCount(); setTab('browse');
+</script>
+</body>
+</html>
